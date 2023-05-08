@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ClipLoader from "react-spinners/ClipLoader";
 import { VersionUtil } from '@remla23-team11/lib/src/util/VersionUtil.js'
 import GithubMarkWhiteSVG from './github-mark-white.svg'
@@ -11,7 +11,7 @@ const App: React.FC = () => {
   const [typingTimer, setTypingTimer] = useState<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [versionUtil] = useState<VersionUtil>(new VersionUtil());
 
-  const makeAPICall = async () => {
+  const makeAPICall = useCallback(async () => {
     try {
       const response = await fetch(process.env.REACT_APP_API_URL!, {
         method: 'POST',
@@ -21,24 +21,27 @@ const App: React.FC = () => {
         body: JSON.stringify({ "msg": text }),
       });
       const data = await response.json();
-      setIsPositiveResult(data.is_positive);
+      setIsPositiveResult(data.predictions[0] > 0.5);
     } catch (error) {
       console.error('Error making API call:', error);
     }
-  };
+  }, [text]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const inputText = event.target.value;
-    setText(inputText);
-
     clearTimeout(typingTimer);
+    setText(inputText);
     setIsChanged(!!inputText);
-
-    setTypingTimer(setTimeout(async () => {
-      await makeAPICall();
-      setIsChanged(false);
-    }, 5000));
   };
+
+  useEffect(() => {
+    if (isChanged) {
+      setTypingTimer(setTimeout(async () => {
+        await makeAPICall();
+        setIsChanged(false);
+      }, 5000));
+    }
+  }, [isChanged, makeAPICall]);
 
   return (
     <div className="App">
