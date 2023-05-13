@@ -10,6 +10,9 @@ const App: React.FC = () => {
   const [isChanged, setIsChanged] = useState(false);
   const [typingTimer, setTypingTimer] = useState<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [versionUtil] = useState<VersionUtil>(new VersionUtil());
+  const [feedback, setFeedback] = useState('');
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false); // New state variable
 
   const makeAPICall = useCallback(async () => {
     try {
@@ -34,14 +37,42 @@ const App: React.FC = () => {
     setIsChanged(!!inputText);
   };
 
-  useEffect(() => {
-    if (isChanged) {
-      setTypingTimer(setTimeout(async () => {
-        await makeAPICall();
-        setIsChanged(false);
-      }, 5000));
+  const handleFeedbackSelection = (feedback: string) => {
+    setFeedback(feedback);
+  };
+
+  const submitFeedback = async () => {
+    const apiUrl = process.env.REACT_APP_API_URL;  // Get the API URL from environment variable
+    setShowAnalysis(false)
+    try {
+      await fetch(`${apiUrl}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "msg": text, "feedback": feedback }),
+      });
+      // Update any necessary state variables or perform other actions
+      setFeedback(''); // Reset feedback to empty string
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
     }
-  }, [isChanged, makeAPICall]);
+  };
+  
+  
+  // useEffect(() => {
+  //   if (isChanged) {
+  //     setTypingTimer(setTimeout(async () => {
+  //       await makeAPICall();
+  //       setIsChanged(false);
+  //     }, 5000));
+  //   }
+  // }, [isChanged, makeAPICall]);
+
+  const handlePredictClick = () => {
+    makeAPICall();
+    setShowAnalysis(true); // Set showAnalysis to true when "Predict" button is clicked
+  };
 
   return (
     <div className="App">
@@ -52,7 +83,39 @@ const App: React.FC = () => {
         onChange={handleInputChange}
         placeholder="Type something..."
       />
+      {showAnalysis && ( // Only show the analysis radio buttons when showAnalysis is true
+        <div className="App-feedback">
+          <label>
+            <input
+              type="radio"
+              value="correct"
+              checked={feedback === 'correct'}
+              onChange={() => handleFeedbackSelection('correct')}
+            />{' '}
+            This analysis is correct
+          </label>
+          <label>
+            <input
+              type="radio"
+              value="incorrect"
+              checked={feedback === 'incorrect'}
+              onChange={() => handleFeedbackSelection('incorrect')}
+            />{' '}
+            This analysis is incorrect
+          </label>
+            
+        </div>
+      )}
+      {feedback && <button onClick={submitFeedback}>Submit</button>}
       <div className="App-result">
+        
+        <button onClick={handlePredictClick} disabled={!isChanged}>
+          Predict
+        </button>
+        {isPositiveResult ? <p>🙂</p> : <p>🙁</p>}
+      </div>
+
+      {/* <div className="App-result">
         {isChanged ?
           <div style={{ marginTop: "-10px" }}>
             <ClipLoader
@@ -64,7 +127,9 @@ const App: React.FC = () => {
           </div> :
           isPositiveResult ? <>🙂</> : <>🙁</>
         }
-      </div>
+      </div> */}
+
+
       <div className="App-footer">
         <a href="https://github.com/remla23-team11" target="_blank" rel="noopener noreferrer">
           <img className="App-icon" src={GithubMarkWhiteSVG} alt="Github" />
