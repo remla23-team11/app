@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import ClipLoader from "react-spinners/ClipLoader";
+import React, { useCallback, useState } from 'react';
 import { VersionUtil } from '@remla23-team11/lib/src/util/VersionUtil.js'
 import GithubMarkWhiteSVG from './github-mark-white.svg'
 import './App.css';
@@ -8,10 +7,8 @@ const App: React.FC = () => {
   const [text, setText] = useState('');
   const [isPositiveResult, setIsPositiveResult] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
-  const [typingTimer, setTypingTimer] = useState<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [versionUtil] = useState<VersionUtil>(new VersionUtil());
   const [feedback, setFeedback] = useState('');
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false); // New state variable
 
   const makeAPICall = useCallback(async () => {
@@ -32,7 +29,6 @@ const App: React.FC = () => {
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const inputText = event.target.value;
-    clearTimeout(typingTimer);
     setText(inputText);
     setIsChanged(!!inputText);
   };
@@ -43,7 +39,6 @@ const App: React.FC = () => {
 
   const submitFeedback = async () => {
     const apiUrl = process.env.REACT_APP_API_URL;  // Get the API URL from environment variable
-    setShowAnalysis(false)
     try {
       await fetch(`${apiUrl}/feedback`, {
         method: 'POST',
@@ -54,20 +49,16 @@ const App: React.FC = () => {
       });
       // Update any necessary state variables or perform other actions
       setFeedback(''); // Reset feedback to empty string
+      setShowAnalysis(false)
+      setText('')
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      setFeedback(''); // Reset feedback to empty string
+      setShowAnalysis(false)
+      setText('')
     }
   };
   
-  
-  // useEffect(() => {
-  //   if (isChanged) {
-  //     setTypingTimer(setTimeout(async () => {
-  //       await makeAPICall();
-  //       setIsChanged(false);
-  //     }, 5000));
-  //   }
-  // }, [isChanged, makeAPICall]);
 
   const handlePredictClick = () => {
     makeAPICall();
@@ -83,7 +74,7 @@ const App: React.FC = () => {
         onChange={handleInputChange}
         placeholder="Type something..."
       />
-      {showAnalysis && ( // Only show the analysis radio buttons when showAnalysis is true
+      {text && showAnalysis && ( // Only show the analysis radio buttons when showAnalysis is true
         <div className="App-feedback">
           <label>
             <input
@@ -103,32 +94,29 @@ const App: React.FC = () => {
             />{' '}
             This analysis is incorrect
           </label>
-            
         </div>
       )}
-      {feedback && <button onClick={submitFeedback}>Submit</button>}
-      <div className="App-result">
-        
-        <button onClick={handlePredictClick} disabled={!isChanged}>
-          Predict
-        </button>
-        {isPositiveResult ? <p>🙂</p> : <p>🙁</p>}
-      </div>
-
-      {/* <div className="App-result">
-        {isChanged ?
-          <div style={{ marginTop: "-10px" }}>
-            <ClipLoader
-              color="#2a3757"
-              size={36}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-            />
-          </div> :
-          isPositiveResult ? <>🙂</> : <>🙁</>
-        }
-      </div> */}
-
+      {text && feedback && 
+        <button 
+          style={{ margin: "25px 0"}} 
+          onClick={submitFeedback}
+        >
+          Submit
+        </button>}
+      {text && (
+        <>
+          <button 
+            style={{ margin: "25px 0"}} 
+            onClick={handlePredictClick} 
+            disabled={!isChanged}
+          >
+            Analyze
+          </button> 
+          <div className="App-result">
+              {isPositiveResult ? <p>🙂</p> : <p>🙁</p>}
+          </div>
+        </>
+      )}
 
       <div className="App-footer">
         <a href="https://github.com/remla23-team11" target="_blank" rel="noopener noreferrer">
