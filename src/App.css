@@ -22,7 +22,7 @@
 }
 
 .App-result {
-  margin: 20px 0;
+  margin: -20px 0;
   font-size: 72px;
   background-color: "#171d2b";
 }
