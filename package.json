@@ -1,9 +1,9 @@
 {
   "name": "app",
-  "version": "0.0.1",
+  "version": "1.0.2",
   "private": true,
   "dependencies": {
-    "@remla23-team11/lib": "1.0.1",
+    "@remla23-team11/lib": "1.0.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
